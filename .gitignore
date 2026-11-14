@@ -1,0 +1,16 @@
+node_modules/
+.env
+.env.*
+!.env.example
+.database*
+*.sqlite
+*.sqlite-*
+sessions/*
+!sessions/.gitkeep
+media/*
+!media/.gitkeep
+whatsmeow-service/data/
+whatsmeow-service/*.db
+whatsmeow-service/*.db-*
+*.log
+.zip

@@ -1,0 +1,181 @@
+{
+  "$comment": "Contrato documental das coleções acessadas via getProxy('whatsapp-manager').",
+  "collections": {
+    "instance": {
+      "description": "Uma sessão WhatsApp administrada de forma independente.",
+      "fields": {
+        "id": { "type": "string", "auto": true },
+        "name": { "type": "string", "required": true, "unique": true },
+        "status": { "type": "string", "enum": ["connecting", "open", "disconnected"] },
+        "proxyPool": { "type": "string", "note": "JSON.stringify(string[])" },
+        "proxyUrl": { "type": "string|null", "deprecated": true },
+        "antibotConfig": { "type": "string", "note": "JSON.stringify(AntibotConfig), isolado por instância" },
+        "metaSendControls": { "type": "string|null", "note": "JSON.stringify(MetaSendControls), somente Meta Cloud API" },
+        "metaTemplates": { "type": "string|null", "note": "cache JSON do catálogo de templates da WABA" },
+        "metaTemplatesSyncedAt": { "type": "date|null" },
+        "metaWebhookDiagnostic": { "type": "string|null", "note": "JSON sem payload: último webhook autenticado recebido pela instância" },
+        "agentEnabled": { "type": "boolean", "note": "opt-in explícito para respostas automáticas" },
+        "specialistId": { "type": "string|null", "note": "especialista vinculado à instância" },
+        "agentBehavior": { "type": "string|null", "note": "JSON.stringify({ accumulationSeconds, responseDelaySeconds }), somente Meta Cloud API" },
+        "agentIdentity": { "type": "string|null", "note": "JSON.stringify({ businessName, humanChannel })" },
+        "agentPausedReason": { "type": "string|null" },
+        "evolutionBaseUrl": { "type": "string|null", "note": "URL da Evolution API externa" },
+        "evolutionApiKey": { "type": "string|null", "note": "segredo, nunca exposto" },
+        "evolutionQrCode": { "type": "string|null" },
+        "evolutionWebhookUrl": { "type": "string|null" },
+        "evolutionWebhookSecret": { "type": "string|null", "note": "segredo de autenticação do webhook, nunca exposto" },
+        "evolutionLastError": { "type": "string|null" },
+        "createdAt": { "type": "date" }
+      }
+    },
+    "conversation": {
+      "fields": {
+        "id": { "type": "string", "auto": true },
+        "instanceId": { "type": "string", "references": "instance.id" },
+        "contactJid": { "type": "string" },
+        "contactName": { "type": "string|null" },
+        "unreadCount": { "type": "number" },
+        "lastMessagePreview": { "type": "string|null" },
+        "lastMessageAt": { "type": "date|null" },
+        "agentBlocked": { "type": "boolean", "note": "Bloqueia respostas automáticas sem apagar o histórico" },
+        "agentBlockedAt": { "type": "date|null" },
+        "agentBlockReason": { "type": "string|null" }
+      }
+    },
+    "message": {
+      "fields": {
+        "id": { "type": "string", "auto": true },
+        "conversationId": { "type": "string", "references": "conversation.id" },
+        "instanceId": { "type": "string", "references": "instance.id" },
+        "direction": { "type": "string", "enum": ["in", "out"] },
+        "authorType": { "type": "string", "enum": ["contact", "human", "agent"] },
+        "automationId": { "type": "string|null", "note": "Identificador do Flow que emitiu uma resposta automática" },
+        "text": { "type": "string|null" },
+        "mediaType": { "type": "string|null" },
+        "mediaUrl": { "type": "string|null" },
+        "templateName": { "type": "string|null", "note": "nome do template oficial Meta, quando aplicável" },
+        "templateLanguageCode": { "type": "string|null" },
+        "templateComponents": { "type": "string|null", "note": "JSON dos parâmetros originais para reenvio oficial" },
+        "waMessageId": { "type": "string|null" },
+        "status": { "type": "string", "enum": ["pending_approval", "sending", "sent", "delivered", "read", "failed"] },
+        "deliveryIntentId": { "type": "string|null", "references": "deliveryIntent.id" },
+        "providerStatus": { "type": "string|null", "note": "accepted significa aceita pela Meta, ainda sem confirmação de entrega" },
+        "statusUpdatedAt": { "type": "date|null" },
+        "providerErrorCode": { "type": "string|null" },
+        "error": { "type": "string|null" },
+        "timestamp": { "type": "date" }
+      }
+    },
+    "deliveryIntent": {
+      "description": "Intenção automatizada persistida. Só o despacho explícito do Manager pode chamar um provider.",
+      "fields": {
+        "id": { "type": "string", "auto": true },
+        "requestId": { "type": "string", "unique": true },
+        "source": { "type": "string" },
+        "campaignId": { "type": "string|null" },
+        "recipientId": { "type": "string|null" },
+        "sourceMessageId": { "type": "string|null", "references": "message.id" },
+        "instanceId": { "type": "string", "references": "instance.id" },
+        "recipientNumber": { "type": "string" },
+        "recipientVariables": { "type": "string", "note": "JSON.stringify(object)" },
+        "message": { "type": "string", "note": "JSON.stringify(normalized message)" },
+        "status": { "type": "string", "enum": ["pending_approval", "review", "approved", "queued", "dispatching", "sent", "failed", "cancelled"] },
+        "approvedBy": { "type": "string|null" },
+        "approvedAt": { "type": "date|null" },
+        "cancelReason": { "type": "string|null" },
+        "provider": { "type": "string|null" },
+        "providerMessageId": { "type": "string|null" },
+        "createdAt": { "type": "date" },
+        "updatedAt": { "type": "date" }
+      }
+    },
+    "deliveryAudit": {
+      "description": "Histórico imutável das transições de uma intenção de entrega.",
+      "fields": {
+        "id": { "type": "string", "auto": true },
+        "deliveryIntentId": { "type": "string", "references": "deliveryIntent.id" },
+        "action": { "type": "string" },
+        "actor": { "type": "string" },
+        "details": { "type": "string" },
+        "createdAt": { "type": "date" }
+      }
+    },
+    "campaign": {
+      "fields": {
+        "localAccess": { "type": "boolean", "note": "Execução vinculada à identidade local, com revalidação antes de cada envio" },
+        "id": { "type": "string", "auto": true },
+        "name": { "type": "string" },
+        "templateContent": { "type": "string" },
+        "campaignType": { "type": "string", "enum": ["baileys_text", "meta_template"] },
+        "metaTemplate": { "type": "string|null", "note": "JSON.stringify({name, languageCode, variableSources}); variableKeys legado" },
+        "estimatedSpend": { "type": "number|null" },
+        "instanceIds": { "type": "string", "note": "JSON.stringify(string[])" },
+        "minDelay": { "type": "number" },
+        "maxDelay": { "type": "number" },
+        "status": { "type": "string", "enum": ["draft", "running", "paused", "completed", "cancelled"] }
+      }
+    },
+    "campaignRecipient": {
+      "fields": {
+        "id": { "type": "string", "auto": true },
+        "campaignId": { "type": "string", "references": "campaign.id" },
+        "number": { "type": "string" },
+        "variables": { "type": "string|null" },
+        "status": { "type": "string", "enum": ["pending", "sent", "failed"] },
+        "assignedInstanceId": { "type": "string|null" },
+        "sentAt": { "type": "date|null" },
+        "error": { "type": "string|null" }
+      }
+    },
+    "contact": {
+      "description": "Contato de uma instância, com cargo livre e flag isOwner (no máx. 1 por instância) usada pela tool whatsappNotifyOwner.",
+      "fields": {
+        "id": { "type": "string", "auto": true },
+        "instanceId": { "type": "string", "references": "instance.id" },
+        "number": { "type": "string", "note": "apenas dígitos, com DDI" },
+        "name": { "type": "string" },
+        "role": { "type": "string|null" },
+        "isOwner": { "type": "boolean" },
+        "createdAt": { "type": "date" }
+      }
+    },
+    "agentConsultation": {
+      "description": "Consulta pendente enviada pelo agente para um responsável humano.",
+      "fields": {
+        "id": { "type": "string", "auto": true },
+        "instanceId": { "type": "string", "references": "instance.id" },
+        "sourceConversationId": { "type": "string", "references": "conversation.id" },
+        "sourceMessageId": { "type": "string|null", "references": "message.id" },
+        "helperConversationId": { "type": "string", "references": "conversation.id" },
+        "helperContactJid": { "type": "string" },
+        "question": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "answered", "cancelled"] },
+        "helperAnswer": { "type": "string|null" },
+        "answeredAt": { "type": "date|null" },
+        "createdAt": { "type": "date" }
+      }
+    },
+    "agentKnowledge": {
+      "description": "Informação confirmada que pode ser reutilizada pelo agente da instância.",
+      "fields": {
+        "id": { "type": "string", "auto": true },
+        "instanceId": { "type": "string", "references": "instance.id" },
+        "consultationId": { "type": "string|null", "references": "agentConsultation.id", "unique": true },
+        "question": { "type": "string" },
+        "answer": { "type": "string" },
+        "createdAt": { "type": "date" }
+      }
+    }
+  },
+  "antibotConfig": {
+    "enabled": "boolean",
+    "warmupEnabled": "boolean",
+    "blockOnCriticalRisk": "boolean",
+    "maxPerMinute": "number",
+    "maxPerHour": "number",
+    "minDelayMs": "number",
+    "maxDelayMs": "number",
+    "newChatDelayMs": "number",
+    "burstAllowance": "number"
+  }
+}

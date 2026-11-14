@@ -1,0 +1,34 @@
+{
+  "name": "whatsapp-manager",
+  "version": "2.0.0",
+  "type": "module",
+  "runtime": {
+    "stability": {
+      "routes": ["events"]
+    }
+  },
+  "description": "Multi-instance WhatsApp inbox with QR connections, chats, and templates.",
+  "manifest": {
+    "name": "WhatsApp Manager",
+    "page": [
+      {
+        "name": "WhatsApp Manager",
+        "source": "views/Index.svelte"
+      }
+    ]
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "baileys": "^7.0.0-rc13",
+    "https-proxy-agent": "^7.0.4",
+    "socks-proxy-agent": "^8.0.3",
+    "qrcode": "^1.5.3",
+    "pino": "^9.0.0"
+  },
+  "notes": {
+    "logos": "Fornecido pelo host/runtime da plataforma (getProxy/dispatchEvent) — não é um pacote npm público, não incluir no install.",
+    "antibot": "100% nativo em core/antibot/*, sem dependência de terceiros (warmup, rate limit, health monitor, LID resolver, fingerprint, proxy pool, digitação humanizada)."
+  }
+}
